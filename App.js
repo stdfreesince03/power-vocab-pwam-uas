@@ -1,12 +1,26 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+import TagLine from "./components/common/TagLine";
+import {NavigationContainer} from "@react-navigation/native";
+import {createNativeStackNavigator} from '@react-navigation/native-stack'
+import AuthScreen from "./screens/AuthScreen";
+import Toast from "react-native-toast-message";
+
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+      <>
+          <NavigationContainer>
+              <Stack.Navigator>
+                  <Stack.Screen name="AuthScreen" component={AuthScreen} options={{headerShown: false}} />
+              </Stack.Navigator>
+              <Toast/>
+          </NavigationContainer>
+
+      </>
+
   );
 }
 
