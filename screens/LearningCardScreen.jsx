@@ -1,22 +1,26 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Alert, BackHandler, Text, View, ActivityIndicator, StyleSheet } from "react-native";
 import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
 import useLayoutEffect from "react-native-web/src/modules/useLayoutEffect";
-import Header from "../components/screens/LearningCardScreen/Header";
 import Toast from "react-native-toast-message";
 import useAuthStore from "../store/authStore";
 import useCardStore from "../store/cardStore";
 import ScreenWrapper from "../components/common/ScreenWrapper";
-import colors from '../theme/color'
-import {heightPercentageToDP as hp} from "react-native-responsive-screen";
-import CardItem from "../components/screens/LearningCardScreen/CardItem";
+import colors from "../theme/color";
+import { heightPercentageToDP as hp } from "react-native-responsive-screen";
+import Header from "../components/screens/LearningCardScreen/Header";
 import CardList from "../components/screens/LearningCardScreen/CardList";
+import AddEditModal from "../components/screens/LearningCardScreen/AddEditModal";
+import NoCardYet from "../components/screens/LearningCardScreen/NoCartYet";
+
 
 export default function LearningCardScreen() {
     const navigation = useNavigation();
     const route = useRoute();
     const authStore = useAuthStore();
-    const { fetchCards, error, isLoading, cards } = useCardStore();
+    const { fetchCards, error, isLoading, cards, addNewCard } = useCardStore();
+
+    const [modalVisible, setModalVisible] = useState(false);
 
     useEffect(() => {
         if (route.params?.auth) {
@@ -38,7 +42,24 @@ export default function LearningCardScreen() {
         fetchCards(authStore.token);
     }, [authStore.token]);
 
-    const handleLogout = async () => {
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            header: () => (
+                <Header cardsCount={cards.length} onAddCard={addCard} onLogout={showLogoutConfirmation} />
+            ),
+        });
+    }, [navigation, cards.length]);
+
+    function addCard() {
+        setModalVisible(true);
+    }
+
+    function handleCardSubmit(newCard) {
+        addNewCard(newCard);
+        setModalVisible(false);
+    }
+
+    async function handleLogout() {
         try {
             await authStore.removeToken();
             navigation.dispatch(StackActions.replace("AuthScreen"));
@@ -49,9 +70,9 @@ export default function LearningCardScreen() {
                 text2: err.message,
             });
         }
-    };
+    }
 
-    const showLogoutConfirmation = () => {
+    function showLogoutConfirmation() {
         Alert.alert(
             "Log Out",
             "Are you sure you want to log out?",
@@ -61,19 +82,15 @@ export default function LearningCardScreen() {
             ],
             { cancelable: false }
         );
-    };
-
-    function addCard() {
-
     }
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            header: () => (
-                <Header cardsCount={cards.length} onAddCard={addCard} onLogout={showLogoutConfirmation} />
-            ),
-        });
-    }, [navigation, cards.length]);
+    function handleCardDelete(cardId) {
+        console.log("Delete card", cardId);
+    }
+
+    function handleCardEdit(card) {
+        console.log("Edit card", card);
+    }
 
     if (isLoading) {
         return (
@@ -84,7 +101,6 @@ export default function LearningCardScreen() {
         );
     }
 
-
     if (error) {
         return (
             <View style={styles.errorContainer}>
@@ -93,27 +109,22 @@ export default function LearningCardScreen() {
         );
     }
 
-    function handleCardDelete(){
-
-    }
-
-    function handleCardEdit(){
-
-    }
-
     return (
         <ScreenWrapper>
             <View style={styles.cardsContainer}>
                 {cards.length > 0 ? (
-                    <CardList cards={cards} onEdit={handleCardEdit} onDelete={handleCardDelete}></CardList>
-                    // cards.map((card) => (
-                    //     <CardItem card={card} onDelete={handleCardDelete} onEdit={handleCardDelete} ></CardItem>
-                    // ))
+                    <CardList cards={cards} onEdit={handleCardEdit} onDelete={handleCardDelete} />
                 ) : (
-                    <Text>No cards available</Text>
+                    <NoCardYet onAddCard={addCard} />
                 )}
             </View>
 
+            {/* Card Modal */}
+            <AddEditModal
+                visible={modalVisible}
+                onClose={() => setModalVisible(false)}
+                onSubmit={handleCardSubmit}
+            />
         </ScreenWrapper>
     );
 }
@@ -126,8 +137,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.background_1.white,
     },
     loadingText: {
-        marginBottom: hp('20'),
-        marginTop:hp('2'),
+        marginBottom: hp("20"),
+        marginTop: hp("2"),
         fontSize: 18,
         color: colors.primary[500],
         fontWeight: "600",
@@ -140,9 +151,10 @@ const styles = StyleSheet.create({
     errorText: {
         color: "red",
         fontSize: 16,
-    }, cardsContainer:{
-        textAlign:'center',
-        justifyContent:'center',
-        alignItems:'center'
-    }
+    },
+    cardsContainer: {
+        textAlign: "center",
+        justifyContent: "center",
+        alignItems: "center",
+    },
 });

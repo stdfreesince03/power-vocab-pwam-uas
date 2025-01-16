@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getCards } from '../service/cardService';
+import {createCard, getCards} from '../service/cardService';
 
 const useCardStore = create((set) => ({
     cards: [],
@@ -17,6 +17,26 @@ const useCardStore = create((set) => ({
             }
         } catch (err) {
             set({ error: 'Failed to fetch cards' });
+        } finally {
+            set({ isLoading: false });
+        }
+    },
+    addNewCard: async (token, newCard) => {
+        set({ isLoading: true, error: null });
+
+        try {
+            const createdCard = await createCard(token, newCard);
+
+            if (createdCard.error) {
+                set({ error: createdCard.error });
+                return;
+            }
+
+            set((state) => ({
+                cards: [...state.cards, createdCard]
+            }));
+        } catch (err) {
+            set({ error: 'Failed to add card' });
         } finally {
             set({ isLoading: false });
         }

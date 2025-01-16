@@ -12,3 +12,17 @@ export async function getCards(token){
         return {error: err.response?.data?.error || 'An unknown error occurred'};
     }
 }
+
+export async function createCard(token, cardData) {
+    try {
+        const response = await apiClient.post(`/api/cards`, cardData, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            }
+        });
+        return response.data; // Return the created card data
+    } catch (err) {
+        return { error: err.response?.data?.error || 'An unknown error occurred' };
+    }
+}
