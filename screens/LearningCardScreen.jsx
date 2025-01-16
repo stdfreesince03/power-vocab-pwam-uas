@@ -28,7 +28,7 @@ export default function LearningCardScreen() {
     const navigation = useNavigation();
     const route = useRoute();
     const authStore = useAuthStore();
-    const { fetchCards, error, isLoading, cards, addNewCard, setChosenCard ,chosenCard,deleteCard} = useCardStore();
+    const { fetchCards, error, isLoading, cards, addNewCard, setChosenCard ,chosenCard,deleteCard,updateCard} = useCardStore();
 
     const [modalVisible, setModalVisible] = useState(false);
     const [modalStep, setModalStep] = useState("addEdit");
@@ -78,6 +78,12 @@ export default function LearningCardScreen() {
         setModalStep("addEdit");
     }
 
+    async function handleCardUpdate(newCard){
+        await updateCard(authStore.token,newCard)
+        setModalVisible(false);
+        setModalStep("addEdit");
+    }
+
     async function handleLogout() {
         try {
             await authStore.removeToken();
@@ -102,12 +108,15 @@ export default function LearningCardScreen() {
     }
 
     async function handleDelete(){
+        if (!chosenCard) {
+            return;
+        }
         setModalVisible(false);
         await deleteCard(authStore.token,chosenCard.id);
         setChosenCard(null);
     }
 
-    async function handleStartEdit(){
+    function handleStartEdit(){
         setModalStep("addEdit");
         setModalVisible(true);
     }
@@ -136,7 +145,7 @@ export default function LearningCardScreen() {
                     <Text style={styles.errorText}>Error: {error}</Text>
                 </View>
             ) : cards.length > 0 ? (
-                  <CardList cards={cards} onDelete={handleStartDelete} onEdit={handleStartEdit}></CardList>
+                <CardList cards={cards} onDelete={handleStartDelete} onEdit={handleStartEdit}></CardList>
             ) : (
                 <NoCardYet onAddCard={addCard} />
             )}
@@ -158,6 +167,8 @@ export default function LearningCardScreen() {
                 token={authStore.token}
                 onClose={() => closeDeleteModal()}
                 onSuccess={(newCard) => handleCardSubmit(newCard)}
+                onUpdate={handleCardUpdate}
+                initialData={chosenCard}
             />
         </ScreenWrapper>
     );

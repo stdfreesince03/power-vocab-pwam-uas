@@ -28,9 +28,22 @@ export async function createCard(token, cardData) {
 }
 
 
-export async function deleteCard(token, cardId) {
+export async function deleteCardService(token, cardId) {
     try {
         const response = await apiClient.delete(`/api/cards/${cardId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (err) {
+        return { error: err.response?.data?.error || "An unknown error occurred" };
+    }
+}
+
+export async function updateCardService(token,updatedCard) {
+    try {
+        const response = await apiClient.put(`/api/cards/${updatedCard.id}`, updatedCard,{
             headers: {
                 Authorization: `Bearer ${token}`,
             },

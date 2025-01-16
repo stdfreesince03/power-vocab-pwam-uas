@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -12,9 +12,18 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import colors from '../../../theme/color';
 import { spacing } from '../../../theme/spacing';
 
-export default function DetailCardModal({ visible, onClose, wordPairs, onSuccess }) {
-    const [title, setTitle] = useState('');
-    const [targetDays, setTargetDays] = useState('');
+
+export default function DetailCardModal({ visible, onClose, wordPairs, onSuccess, onUpdate, initialData }) {
+
+    const [title, setTitle] = useState(initialData?.title || '');
+    const [targetDays, setTargetDays] = useState(initialData?.targetDays?.toString() || '');
+
+    useEffect(() => {
+        if (initialData) {
+            setTitle(initialData.title || '');
+            setTargetDays(initialData.targetDays?.toString() || '');
+        }
+    }, [initialData, visible])
 
     const handleCreateCard = () => {
         if (!title.trim() || !targetDays.trim()) return;
@@ -27,17 +36,40 @@ export default function DetailCardModal({ visible, onClose, wordPairs, onSuccess
             }))
         };
         onSuccess(newCard);
+        handleClose();
+    };
+
+    const handleClose= () =>{
+        setTitle('');
+        setTargetDays('');
         onClose();
+    }
+
+    const handleUpdateCard = () => {
+        if (!title.trim() || !targetDays.trim()) return;
+        const updatedCard = {
+            ...initialData,
+            title,
+            targetDays: parseInt(targetDays),
+            wordPairs: wordPairs.map(pair => ({
+                english: pair.english,
+                indonesian: pair.indonesian
+            }))
+        };
+        onUpdate(updatedCard);
+        handleClose();
     };
 
     return (
         <Modal visible={visible} animationType="slide" transparent>
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContainer}>
-                    <Pressable style={styles.closeButton} onPress={onClose}>
+                    <Pressable style={styles.closeButton} onPress={handleClose}>
                         <X size={wp(5)} color={colors.gray[600]} />
                     </Pressable>
-                    <Text style={styles.modalTitle}>Detail Kartu Baru</Text>
+                    <Text style={styles.modalTitle}>
+                        {initialData ? 'Edit Kartu' : 'Detail Kartu Baru'}
+                    </Text>
                     <Text style={styles.label}>Judul Kartu</Text>
                     <TextInput
                         style={styles.input}
@@ -56,14 +88,15 @@ export default function DetailCardModal({ visible, onClose, wordPairs, onSuccess
                     <Pressable
                         style={[styles.createButton, (!title.trim() || !targetDays.trim()) && styles.disabledButton]}
                         disabled={!title.trim() || !targetDays.trim()}
-                        onPress={handleCreateCard}
+                        onPress={initialData ? handleUpdateCard : handleCreateCard}
                     >
-                        <Text style={styles.createButtonText}>Buat Kartu</Text>
+                        <Text style={styles.createButtonText}>
+                            {initialData ? 'Update Kartu' : 'Buat Kartu'}
+                        </Text>
                     </Pressable>
                     <Pressable style={styles.cancelButton} onPress={onClose}>
                         <Text style={styles.cancelButtonText}>Batal</Text>
                     </Pressable>
-
                 </View>
             </View>
         </Modal>

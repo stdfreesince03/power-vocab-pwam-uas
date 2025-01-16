@@ -58,20 +58,20 @@ export default function AddEditModal({ visible, onClose,onNext ,onStartDelete,in
         setIsInputIncomplete(false);
     };
 
-  const handleRemoveWord = (id) => {
+    const handleRemoveWord = (id) => {
         if(initialData && wordList.length ===1){
-            setChosenCard(initialData.id);
             onStartDelete();
         } else{
             setWordList(wordList.filter((word) => word.id !== id));
         }
     };
 
+
     const isDisabled =
         wordList.length === 0 ||
         wordInput.english !== '' ||
         wordInput.indonesian !== '' ||
-        (initialData && arraysEqual(wordList,initialData.wordPairs));
+        (initialData && arraysEqual(wordList,(initialData.wordPairs || [])));
 
     return (
         <Modal visible={visible} animationType="slide" transparent>
@@ -132,7 +132,7 @@ export default function AddEditModal({ visible, onClose,onNext ,onStartDelete,in
                     <Pressable
                         style={[styles.nextButton, isDisabled && styles.disabledButton]}
                         disabled={isDisabled}
-                        onPress={() => onNext(wordList)}
+                        onPress={() =>onNext(wordList)}
                     >
                         <Text style={styles.nextButtonText}>Lanjut</Text>
                     </Pressable>

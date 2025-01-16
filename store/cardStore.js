@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import {createCard, deleteCard, getCards} from '../service/cardService';
+import {createCard, deleteCardService, getCards, updateCardService} from '../service/cardService';
 
 const useCardStore = create((set) => ({
     cards: [],
@@ -48,7 +48,7 @@ const useCardStore = create((set) => ({
         set({ isLoading: true, error: null });
 
         try {
-            const result = await deleteCard(token, cardId);
+            const result = await deleteCardService(token, cardId);
             if (result.error) {
                 set({ error: result.error });
                 return;
@@ -65,6 +65,25 @@ const useCardStore = create((set) => ({
     },
 
     setChosenCard: (card) => set({ chosenCard: card }),
+
+    updateCard: async (token, updatedCard) => {
+        try {
+            const updatedCardResponse = await updateCardService(token,updatedCard);
+
+            if (updatedCardResponse.error) {
+                set({ error: updatedCardResponse.error });
+                return;
+            }
+
+            set((state) => ({
+                cards: state.cards.map((c) =>
+                    c.id === updatedCard.id ? updatedCardResponse : c
+                ),
+            }));
+        } catch (error) {
+            set({ error: error.message });
+        }
+    },
 
 }));
 
