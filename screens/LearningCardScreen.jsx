@@ -107,8 +107,9 @@ export default function LearningCardScreen() {
         setChosenCard(null);
     }
 
-    async function handleEdit(){
-
+    async function handleStartEdit(){
+        setModalStep("addEdit");
+        setModalVisible(true);
     }
 
     function showLogoutConfirmation() {
@@ -135,7 +136,7 @@ export default function LearningCardScreen() {
                     <Text style={styles.errorText}>Error: {error}</Text>
                 </View>
             ) : cards.length > 0 ? (
-                  <CardList cards={cards} onDelete={handleStartDelete} onEdit={handleEdit}></CardList>
+                  <CardList cards={cards} onDelete={handleStartDelete} onEdit={handleStartEdit}></CardList>
             ) : (
                 <NoCardYet onAddCard={addCard} />
             )}
@@ -146,6 +147,8 @@ export default function LearningCardScreen() {
             <AddEditModal
                 visible={modalVisible && modalStep === "addEdit"}
                 onNext={handleNextStep}
+                onStartDelete={handleStartDelete}
+                initialData={chosenCard}
                 onClose={() => closeDeleteModal()}
             />
 

@@ -18,7 +18,6 @@ export default function DetailCardModal({ visible, onClose, wordPairs, onSuccess
 
     const handleCreateCard = () => {
         if (!title.trim() || !targetDays.trim()) return;
-        console.log(wordPairs);
         const newCard = {
             title,
             targetDays: parseInt(targetDays),

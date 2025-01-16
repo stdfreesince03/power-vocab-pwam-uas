@@ -24,6 +24,11 @@ export default function CardItem({ card, onEdit, onDelete }) {
         onDelete();
     }
 
+    function handleCardItemEdit(){
+        setChosenCard(card);
+        onEdit();
+    }
+
     return (
         <Pressable style={styles.cardContainer}>
             <View style={styles.header}>
@@ -31,7 +36,7 @@ export default function CardItem({ card, onEdit, onDelete }) {
                     {card.title}
                 </Text>
                 <View style={styles.iconContainer}>
-                    <Pressable onPress={() => onEdit(card)} style={styles.editIcon}>
+                    <Pressable onPress={() => handleCardItemEdit()} style={styles.editIcon}>
                         <Edit2 size={wp(4)} color={colors.primary[500]} />
                     </Pressable>
                     <Pressable onPress={() => handleCardItemDelete()} style={styles.deleteIcon}>

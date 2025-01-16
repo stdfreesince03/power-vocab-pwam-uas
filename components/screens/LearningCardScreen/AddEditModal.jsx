@@ -13,16 +13,28 @@ import { X, Trash2, AlertCircle } from 'lucide-react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 import colors from '../../../theme/color';
 import { spacing } from '../../../theme/spacing';
+import useCardStore from "../../../store/cardStore";
 
-export default function AddEditModal({ visible, onClose,onNext ,initialData }) {
+const arraysEqual = (arr1, arr2) => {
+    if (arr1.length !== arr2.length) return false;
+    return arr1.every((item, index) =>
+        item.english === arr2[index].english && item.indonesian === arr2[index].indonesian
+    );
+};
+
+export default function AddEditModal({ visible, onClose,onNext ,onStartDelete,initialData }) {
     const [wordInput, setWordInput] = useState({ english: '', indonesian: '' });
     const [wordList, setWordList] = useState([]);
     const [isInputIncomplete, setIsInputIncomplete] = useState(false);
+    const {setChosenCard} = useCardStore();
 
     useEffect(() => {
         if (visible) {
             setWordInput({ english: '', indonesian: '' });
-            setWordList(initialData?.words || []);
+            setWordList(initialData?.wordPairs?.map((word, index) => ({
+                id: word.id ?? index,
+                ...word
+            })) || []);
             setIsInputIncomplete(false);
         }
     }, [visible]);
@@ -46,9 +58,20 @@ export default function AddEditModal({ visible, onClose,onNext ,initialData }) {
         setIsInputIncomplete(false);
     };
 
-    const handleRemoveWord = (id) => {
-        setWordList(wordList.filter((word) => word.id !== id));
+  const handleRemoveWord = (id) => {
+        if(initialData && wordList.length ===1){
+            setChosenCard(initialData.id);
+            onStartDelete();
+        } else{
+            setWordList(wordList.filter((word) => word.id !== id));
+        }
     };
+
+    const isDisabled =
+        wordList.length === 0 ||
+        wordInput.english !== '' ||
+        wordInput.indonesian !== '' ||
+        (initialData && arraysEqual(wordList,initialData.wordPairs));
 
     return (
         <Modal visible={visible} animationType="slide" transparent>
@@ -59,7 +82,7 @@ export default function AddEditModal({ visible, onClose,onNext ,initialData }) {
                         <X size={wp(5)} color={colors.gray[600]} />
                     </Pressable>
 
-                    <Text style={styles.modalTitle}>Tambah Kata Baru</Text>
+                    <Text style={styles.modalTitle}>{initialData ? 'Edit Kartu' : 'Tambah Kartu Baru'}</Text>
 
                     <TextInput
                         style={styles.input}
@@ -76,7 +99,7 @@ export default function AddEditModal({ visible, onClose,onNext ,initialData }) {
                     />
 
                     <Pressable
-                        style={[styles.addButton, !(wordInput.english.trim() && wordInput.indonesian.trim()) && styles.disabledButton]}
+                        style={[styles.addButton, !isDisabled && styles.disabledButton]}
                         onPress={handleAddWord}
                     >
                         <Text style={styles.addButtonText}>+ Tambah Kata</Text>
@@ -107,8 +130,8 @@ export default function AddEditModal({ visible, onClose,onNext ,initialData }) {
                     )}
 
                     <Pressable
-                        style={[styles.nextButton, (wordList.length === 0 || wordInput.english !== '' || wordInput.indonesian !== ''  )&& styles.disabledButton]}
-                        disabled={wordList.length === 0 || wordInput.english !== '' || wordInput.indonesian !== ''  }
+                        style={[styles.nextButton, isDisabled && styles.disabledButton]}
+                        disabled={isDisabled}
                         onPress={() => onNext(wordList)}
                     >
                         <Text style={styles.nextButtonText}>Lanjut</Text>
