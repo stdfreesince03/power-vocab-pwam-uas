@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { Alert, BackHandler, Text, View, ActivityIndicator, StyleSheet } from "react-native";
+import React, { useState, useEffect, useLayoutEffect } from "react";
+import {
+    Alert,
+    BackHandler,
+    Text,
+    View,
+    ActivityIndicator,
+    StyleSheet,
+    FlatList
+} from "react-native";
 import { StackActions, useNavigation, useRoute } from "@react-navigation/native";
-import useLayoutEffect from "react-native-web/src/modules/useLayoutEffect";
 import Toast from "react-native-toast-message";
 import useAuthStore from "../store/authStore";
 import useCardStore from "../store/cardStore";
@@ -9,18 +16,23 @@ import ScreenWrapper from "../components/common/ScreenWrapper";
 import colors from "../theme/color";
 import { heightPercentageToDP as hp } from "react-native-responsive-screen";
 import Header from "../components/screens/LearningCardScreen/Header";
-import CardList from "../components/screens/LearningCardScreen/CardList";
+import CardItem from "../components/screens/LearningCardScreen/CardItem";
 import AddEditModal from "../components/screens/LearningCardScreen/AddEditModal";
+import DetailCardModal from "../components/screens/LearningCardScreen/DetailCardModal";
 import NoCardYet from "../components/screens/LearningCardScreen/NoCartYet";
+import CardList from "../components/screens/LearningCardScreen/CardList";
+import ConfirmDeleteModal from "../components/screens/LearningCardScreen/ConfirmDeleteModal";
 
 
 export default function LearningCardScreen() {
     const navigation = useNavigation();
     const route = useRoute();
     const authStore = useAuthStore();
-    const { fetchCards, error, isLoading, cards, addNewCard } = useCardStore();
+    const { fetchCards, error, isLoading, cards, addNewCard, setChosenCard ,chosenCard,deleteCard} = useCardStore();
 
     const [modalVisible, setModalVisible] = useState(false);
+    const [modalStep, setModalStep] = useState("addEdit");
+    const [wordPairs, setWordPairs] = useState([]);
 
     useEffect(() => {
         if (route.params?.auth) {
@@ -51,12 +63,19 @@ export default function LearningCardScreen() {
     }, [navigation, cards.length]);
 
     function addCard() {
+        setModalStep("addEdit");
         setModalVisible(true);
     }
 
-    function handleCardSubmit(newCard) {
-        addNewCard(newCard);
+    function handleNextStep(words) {
+        setWordPairs(words);
+        setModalStep("detail");
+    }
+
+    async function handleCardSubmit(newCard) {
+        await addNewCard(authStore.token, newCard);
         setModalVisible(false);
+        setModalStep("addEdit");
     }
 
     async function handleLogout() {
@@ -72,6 +91,26 @@ export default function LearningCardScreen() {
         }
     }
 
+    function handleStartDelete(){
+        setModalStep('deleteItem');
+        setModalVisible(true);
+    }
+
+    function closeDeleteModal(){
+        setModalVisible(false);
+        setChosenCard(null);
+    }
+
+    async function handleDelete(){
+        setModalVisible(false);
+        await deleteCard(authStore.token,chosenCard.id);
+        setChosenCard(null);
+    }
+
+    async function handleEdit(){
+
+    }
+
     function showLogoutConfirmation() {
         Alert.alert(
             "Log Out",
@@ -84,46 +123,38 @@ export default function LearningCardScreen() {
         );
     }
 
-    function handleCardDelete(cardId) {
-        console.log("Delete card", cardId);
-    }
-
-    function handleCardEdit(card) {
-        console.log("Edit card", card);
-    }
-
-    if (isLoading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary[500]} />
-                <Text style={styles.loadingText}>Loading cards...</Text>
-            </View>
-        );
-    }
-
-    if (error) {
-        return (
-            <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>Error: {error}</Text>
-            </View>
-        );
-    }
-
     return (
         <ScreenWrapper>
-            <View style={styles.cardsContainer}>
-                {cards.length > 0 ? (
-                    <CardList cards={cards} onEdit={handleCardEdit} onDelete={handleCardDelete} />
-                ) : (
-                    <NoCardYet onAddCard={addCard} />
-                )}
-            </View>
-
-            {/* Card Modal */}
+            {isLoading ? (
+                <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color={colors.primary[500]} />
+                    <Text style={styles.loadingText}>Loading cards...</Text>
+                </View>
+            ) : error ? (
+                <View style={styles.errorContainer}>
+                    <Text style={styles.errorText}>Error: {error}</Text>
+                </View>
+            ) : cards.length > 0 ? (
+                  <CardList cards={cards} onDelete={handleStartDelete} onEdit={handleEdit}></CardList>
+            ) : (
+                <NoCardYet onAddCard={addCard} />
+            )}
+            <ConfirmDeleteModal onCancel={() => closeDeleteModal() }
+                                onConfirmDelete={handleDelete}
+                                visible={modalVisible && modalStep === "deleteItem"}
+            ></ConfirmDeleteModal>
             <AddEditModal
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
-                onSubmit={handleCardSubmit}
+                visible={modalVisible && modalStep === "addEdit"}
+                onNext={handleNextStep}
+                onClose={() => closeDeleteModal()}
+            />
+
+            <DetailCardModal
+                visible={modalVisible && modalStep === "detail"}
+                wordPairs={wordPairs}
+                token={authStore.token}
+                onClose={() => closeDeleteModal()}
+                onSuccess={(newCard) => handleCardSubmit(newCard)}
             />
         </ScreenWrapper>
     );
@@ -152,9 +183,7 @@ const styles = StyleSheet.create({
         color: "red",
         fontSize: 16,
     },
-    cardsContainer: {
-        textAlign: "center",
-        justifyContent: "center",
-        alignItems: "center",
+    listContainer: {
+        padding: 16,
     },
 });

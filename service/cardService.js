@@ -26,3 +26,17 @@ export async function createCard(token, cardData) {
         return { error: err.response?.data?.error || 'An unknown error occurred' };
     }
 }
+
+
+export async function deleteCard(token, cardId) {
+    try {
+        const response = await apiClient.delete(`/api/cards/${cardId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response.data;
+    } catch (err) {
+        return { error: err.response?.data?.error || "An unknown error occurred" };
+    }
+}

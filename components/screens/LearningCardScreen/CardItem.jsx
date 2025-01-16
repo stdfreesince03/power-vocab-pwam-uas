@@ -5,8 +5,12 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import colors from '../../../theme/color';
 import { typography } from '../../../theme/typography';
 import { spacing } from '../../../theme/spacing';
+import useCardStore from "../../../store/cardStore";
 
 export default function CardItem({ card, onEdit, onDelete }) {
+
+    const {setChosenCard} = useCardStore();
+
     const getProgressColor = (progress) => {
         if(progress === 0 ) return "transparent"
         if (progress < 30) return colors.error[400];
@@ -14,6 +18,12 @@ export default function CardItem({ card, onEdit, onDelete }) {
         if (progress === 100) return colors.success["400"]
         return colors.success[400];
     };
+
+    function handleCardItemDelete(){
+        setChosenCard(card);
+        onDelete();
+    }
+
     return (
         <Pressable style={styles.cardContainer}>
             <View style={styles.header}>
@@ -24,7 +34,7 @@ export default function CardItem({ card, onEdit, onDelete }) {
                     <Pressable onPress={() => onEdit(card)} style={styles.editIcon}>
                         <Edit2 size={wp(4)} color={colors.primary[500]} />
                     </Pressable>
-                    <Pressable onPress={() => onDelete(card.id)} style={styles.deleteIcon}>
+                    <Pressable onPress={() => handleCardItemDelete()} style={styles.deleteIcon}>
                         <Trash2 size={wp(4)} color={colors.error[600]} />
                     </Pressable>
                 </View>

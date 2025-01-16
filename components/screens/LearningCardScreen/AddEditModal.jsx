@@ -14,7 +14,7 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-nat
 import colors from '../../../theme/color';
 import { spacing } from '../../../theme/spacing';
 
-export default function AddEditModal({ visible, onClose, initialData }) {
+export default function AddEditModal({ visible, onClose,onNext ,initialData }) {
     const [wordInput, setWordInput] = useState({ english: '', indonesian: '' });
     const [wordList, setWordList] = useState([]);
     const [isInputIncomplete, setIsInputIncomplete] = useState(false);
@@ -107,8 +107,9 @@ export default function AddEditModal({ visible, onClose, initialData }) {
                     )}
 
                     <Pressable
-                        style={[styles.nextButton, wordList.length === 0 && styles.disabledButton]}
-                        disabled={wordList.length === 0}
+                        style={[styles.nextButton, (wordList.length === 0 || wordInput.english !== '' || wordInput.indonesian !== ''  )&& styles.disabledButton]}
+                        disabled={wordList.length === 0 || wordInput.english !== '' || wordInput.indonesian !== ''  }
+                        onPress={() => onNext(wordList)}
                     >
                         <Text style={styles.nextButtonText}>Lanjut</Text>
                     </Pressable>
