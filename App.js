@@ -7,6 +7,8 @@ import LearningCardScreen from "./screens/LearningCardScreen";
 import Toast from "react-native-toast-message";
 import useAuthStore from "./store/authStore";
 import {useEffect, useState} from "react";
+import CardDetailScreen from "./screens/CardDetailScreen";
+import FlashCardMode from "./screens/FlashCardMode";
 
 const AuthStack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();
@@ -42,7 +44,18 @@ export default function App() {
                             component={LearningCardScreen}
                             options={{
                                 headerBackVisible: false,
-                            }}
+                            }}/>
+                        <AppStack.Screen name="CardDetailScreen"
+                                         component={CardDetailScreen}
+                                       options={{
+                                           headerShown:false
+                                       }}
+                        />
+                        <AppStack.Screen name="FlashCardMode"
+                                         component={FlashCardMode}
+                                         options={{
+                                             headerShown:false
+                                         }}
                         />
                     </AppStack.Navigator>
                 ) : (

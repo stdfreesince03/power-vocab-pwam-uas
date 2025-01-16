@@ -1,4 +1,4 @@
- const colors = {
+const colors = {
     background_1: {
         blue50: '#eff6ff',
         white: '#ffffff',
@@ -6,6 +6,8 @@
     },
 
     primary: {
+        50: '#f0f9ff',
+        100: '#e0f2fe',
         200: '#dbeafe',
         300: '#7dd3fc',
         400: '#38bdf8',
@@ -14,6 +16,19 @@
         700: '#0369a1'
     },
 
+    secondary: {
+        400: '#86efac',
+        500: '#22c55e',
+        600: '#16a34a',
+        700: '#15803d'
+    },
+
+    purple: {
+        400: '#8b5cf6',
+        500: '#7c3aed',
+        600: '#6d28d9',
+        700: '#5b21b6'   // Extra Dark Purple
+    },
 
     gray: {
         200: '#e5e7eb',
@@ -30,25 +45,23 @@
         500: '#ef4444'
     },
 
+    success: {
+        50: '#ecfdf5',
+        400: '#4ade80',
+        600: '#15803d',
+    },
 
+    error: {
+        50: '#fef2f2',
+        400: '#f87171',
+        600: '#dc2626',
+    },
 
-     success: {
-         50: '#ecfdf5',
-         400: '#4ade80',
-         600: '#15803d',
-     },
-
-     error: {
-         50: '#fef2f2',
-         400: '#f87171',
-         600: '#dc2626',
-     },
-
-     warning: {
-         50: '#fefce8',
-         400: '#facc15',
-         600: '#ca8a04',
-     },
+    warning: {
+        50: '#fefce8',
+        400: '#facc15',
+        600: '#ca8a04',
+    },
 }
 
 export default colors;

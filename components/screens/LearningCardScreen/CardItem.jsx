@@ -6,10 +6,12 @@ import colors from '../../../theme/color';
 import { typography } from '../../../theme/typography';
 import { spacing } from '../../../theme/spacing';
 import useCardStore from "../../../store/cardStore";
+import {useNavigation} from "@react-navigation/native";
 
 export default function CardItem({ card, onEdit, onDelete }) {
 
     const {setChosenCard} = useCardStore();
+    const navigation = useNavigation();
 
     const getProgressColor = (progress) => {
         if(progress === 0 ) return "transparent"
@@ -22,6 +24,11 @@ export default function CardItem({ card, onEdit, onDelete }) {
     function handleCardItemDelete(){
         setChosenCard(card);
         onDelete();
+    }
+
+    function toCardDetail(){
+        setChosenCard(card);
+        navigation.navigate('CardDetailScreen')
     }
 
     function handleCardItemEdit(){
@@ -74,7 +81,7 @@ export default function CardItem({ card, onEdit, onDelete }) {
                 </View>
             </View>
 
-            <Pressable style={styles.startButton}>
+            <Pressable style={styles.startButton} onPress={toCardDetail} >
                 <Text style={styles.startButtonText}>Mulai Belajar</Text>
                 <ChevronRight size={wp(4)} color={colors.primary[500]} />
             </Pressable>
@@ -179,7 +186,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: spacing[4],
         paddingHorizontal: spacing[3],
-        backgroundColor: colors.primary[50],
         borderRadius: wp(1.5),
         marginTop: spacing[2],
     },
@@ -189,3 +195,4 @@ const styles = StyleSheet.create({
         color: colors.primary[500],
     },
 });
+
