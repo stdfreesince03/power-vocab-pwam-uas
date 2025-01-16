@@ -6,7 +6,7 @@
     },
 
     primary: {
-        200: '#bae6fd',
+        200: '#dbeafe',
         300: '#7dd3fc',
         400: '#38bdf8',
         500: '#0ea5e9',
@@ -31,9 +31,24 @@
     },
 
 
-    green: {
-        400: '#4ade80'
-    }
+
+     success: {
+         50: '#ecfdf5',
+         400: '#4ade80',
+         600: '#15803d',
+     },
+
+     error: {
+         50: '#fef2f2',
+         400: '#f87171',
+         600: '#dc2626',
+     },
+
+     warning: {
+         50: '#fefce8',
+         400: '#facc15',
+         600: '#ca8a04',
+     },
 }
 
 export default colors;

@@ -9,8 +9,9 @@ import layout from "../theme/layout";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-native-responsive-screen";
 import TagLine from "../components/common/TagLine";
 import { login, signup } from "../service/authService";
-import { storeToken } from "../utilities/token";
 import Toast from "react-native-toast-message";
+import { StackActions, useNavigation } from "@react-navigation/native";
+import useAuthStore from "../store/authStore";
 
 const loginSchema = yup.object().shape({
     email: yup.string().email("Invalid email").required("Email is required"),
@@ -21,15 +22,19 @@ const registrationSchema = yup.object().shape({
     email: yup.string().email("Invalid email").required("Email is required"),
     fullName: yup.string().required("Full name is required"),
     password: yup.string().required("Password is required"),
-    confirmPassword: yup.string()
+    confirmPassword: yup
+        .string()
         .oneOf([yup.ref("password")], "Passwords must match")
         .required("Confirm password is required"),
 });
 
 export default function AuthScreen() {
     const [isLogin, setIsLogin] = useState(true);
+    const [focus, setFocused] = useState("");
 
     const schema = isLogin ? loginSchema : registrationSchema;
+    const navigation = useNavigation();
+    const authStore = useAuthStore();
 
     const {
         control,
@@ -46,6 +51,10 @@ export default function AuthScreen() {
             response = await login(data);
         } else {
             response = await signup(data);
+
+            if (!response.error) {
+                response = await login({ email: data.email, password: data.password });
+            }
         }
 
         if (response.error) {
@@ -56,14 +65,12 @@ export default function AuthScreen() {
             return;
         }
 
-        if (isLogin) {
-            await storeToken(response.token);
-        }
-
-        Toast.show({
-            type: "success",
-            text1: `User ${isLogin ? "Login" : "Registration"} Successful`,
-        });
+        await authStore.setToken(response.token);
+        navigation.dispatch(
+            StackActions.replace("LearningCardScreen", {
+                auth: isLogin ? "Login" : "Registration",
+            })
+        );
     };
 
     return (
@@ -79,70 +86,95 @@ export default function AuthScreen() {
                     </View>
                     <View style={styles.form}>
                         <Text style={styles.formTitle}>{isLogin ? "Welcome Back" : "Create Account"}</Text>
-
                         <View style={styles.inputs}>
-                            {/* Email */}
                             <Controller
                                 name="email"
                                 control={control}
                                 render={({ field: { onChange, value } }) => (
                                     <TextInput
-                                        style={[styles.textInput, errors.email && styles.errorInput]}
+                                        style={[
+                                            styles.textInput,
+                                            errors.email && styles.errorInput,
+                                            focus === "email" && styles.focusedInput,
+                                        ]}
                                         placeholder="Email"
                                         value={value}
                                         onChangeText={onChange}
                                         autoCorrect={false}
                                         autoCapitalize="none"
+                                        onFocus={() => setFocused("email")}
+                                        onBlur={() => setFocused("")}
                                     />
                                 )}
                             />
                             {errors.email && <Text style={styles.errorText}>{errors.email.message}</Text>}
 
-                            {/* Full Name (only for registration) */}
                             {!isLogin && (
                                 <Controller
                                     name="fullName"
                                     control={control}
                                     render={({ field: { onChange, value } }) => (
                                         <TextInput
-                                            style={[styles.textInput, errors.fullName && styles.errorInput]}
+                                            style={[
+                                                styles.textInput,
+                                                errors.fullName && styles.errorInput,
+                                                focus === "fullName" && styles.focusedInput,
+                                            ]}
                                             placeholder="Full Name"
                                             value={value}
                                             onChangeText={onChange}
+                                            onFocus={() => setFocused("fullName")}
+                                            onBlur={() => setFocused("")}
                                         />
                                     )}
                                 />
                             )}
                             {errors.fullName && <Text style={styles.errorText}>{errors.fullName.message}</Text>}
 
-                            {/* Password */}
                             <Controller
                                 name="password"
                                 control={control}
                                 render={({ field: { onChange, value } }) => (
                                     <TextInput
-                                        style={[styles.textInput, errors.password && styles.errorInput]}
+                                        style={[
+                                            styles.textInput,
+                                            errors.password && styles.errorInput,
+                                            focus === "password" && styles.focusedInput,
+                                        ]}
                                         placeholder="Password"
                                         secureTextEntry
                                         value={value}
                                         onChangeText={onChange}
+                                        textContentType="oneTimeCode"
+                                        autoComplete="off"
+                                        autoCapitalize="none"
+                                        onFocus={() => setFocused("password")}
+                                        onBlur={() => setFocused("")}
                                     />
                                 )}
                             />
                             {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
 
-                            {/* Confirm Password (only for registration) */}
                             {!isLogin && (
                                 <Controller
                                     name="confirmPassword"
                                     control={control}
                                     render={({ field: { onChange, value } }) => (
                                         <TextInput
-                                            style={[styles.textInput, errors.confirmPassword && styles.errorInput]}
+                                            style={[
+                                                styles.textInput,
+                                                errors.confirmPassword && styles.errorInput,
+                                                focus === "confirmPassword" && styles.focusedInput,
+                                            ]}
                                             placeholder="Confirm Password"
                                             secureTextEntry
                                             value={value}
                                             onChangeText={onChange}
+                                            textContentType="oneTimeCode"
+                                            autoComplete="off"
+                                            autoCapitalize="none"
+                                            onFocus={() => setFocused("confirmPassword")}
+                                            onBlur={() => setFocused("")}
                                         />
                                     )}
                                 />
@@ -152,16 +184,19 @@ export default function AuthScreen() {
                             )}
                         </View>
 
-                        {/* Submit Button */}
-                        <Pressable
-                            style={styles.button}
-                            onPress={handleSubmit(onSubmit)}
-                            android_ripple={{ color: colors.primary[700], borderless: false }}
-                        >
-                            <Text style={styles.buttonText}>{isLogin ? "Sign In" : "Create Account"}</Text>
-                        </Pressable>
+                        <View style={[styles.buttonContainer, { overflow: "hidden", borderRadius: layout.borderRadius.xl }]}>
+                            <Pressable
+                                style={({ pressed }) => [
+                                    styles.button,
+                                    pressed && Platform.OS === "ios" ? { opacity: 0.7 } : null,
+                                ]}
+                                onPress={handleSubmit(onSubmit)}
+                                android_ripple={{ color: colors.primary[700], borderless: false }}
+                            >
+                                <Text style={styles.buttonText}>{isLogin ? "Sign In" : "Create Account"}</Text>
+                            </Pressable>
+                        </View>
 
-                        {/* Switch Button */}
                         <Pressable onPress={() => setIsLogin(!isLogin)}>
                             <Text style={styles.switchText}>
                                 {isLogin ? "Don't have an account? Sign Up" : "Already have an account? Sign In"}
@@ -186,6 +221,9 @@ const styles = StyleSheet.create({
     tagLineContainer: {
         justifyContent: "flex-end",
         alignItems: "center",
+    },
+    buttonPressed:{
+        opacity:0.5
     },
     form: {
         flex: 0.5,
@@ -225,12 +263,14 @@ const styles = StyleSheet.create({
         color: colors.red[500],
         marginBottom: hp(1),
     },
+    buttonContainer: {
+        marginBottom: hp(1.5),
+    },
     button: {
         backgroundColor: colors.primary[500],
         padding: hp(1.8),
-        borderRadius: layout.borderRadius.xl,
         alignItems: "center",
-        marginBottom: hp(1.5),
+
     },
     buttonText: {
         color: "#fff",
@@ -241,5 +281,20 @@ const styles = StyleSheet.create({
         textAlign: "center",
         color: colors.primary[600],
         marginTop: hp(1),
+    },
+    focusedInput: {
+        borderColor: colors.primary[400],
+        borderWidth: 2,
+        ...Platform.select({
+            ios: {
+                shadowColor: colors.primary[400],
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.2,
+                shadowRadius: 5,
+            },
+            android: {
+                elevation: 3,
+            }
+        }),
     },
 });
