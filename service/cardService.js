@@ -53,3 +53,20 @@ export async function updateCardService(token,updatedCard) {
         return { error: err.response?.data?.error || "An unknown error occurred" };
     }
 }
+
+export async function updateProgressService(token, cardId, wordPairs) {
+    try {
+        const response = await apiClient.put(`/api/cards/${cardId}/progress`,
+            { wordPairs }, // Send only the wordPairs data
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        return response.data;
+    } catch (err) {
+        return { error: err.response?.data?.error || "An unknown error occurred" };
+    }
+}

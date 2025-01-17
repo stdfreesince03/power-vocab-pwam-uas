@@ -15,6 +15,8 @@ const FlashCardModeScreen = () => {
     const [currentWord, setCurrentWord] = useState(null);
     const [progress, setProgress] = useState(0);
 
+    console.log('remainingords',remainingWords);
+
     useEffect(() => {
         if (chosenCard?.wordPairs?.length) {
             const shuffledWords = [...chosenCard.wordPairs].sort(() => Math.random() - 0.5);
@@ -76,7 +78,6 @@ const FlashCardModeScreen = () => {
                 />
             </View>
 
-            {/* Main Content */}
             {currentWord ? (
                 <>
                     <Text style={styles.progressText}>
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         width: '100%',
         paddingHorizontal: spacing[3],
-        marginBottom: hp(3),
+        marginBottom: hp(5),
     },
     backButton: {
         flexDirection: 'row',
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
     progressText: {
         fontSize: typography.sizes.lg,
         color: "#0369a1",
-        marginBottom: hp(2),
+        marginBottom: hp(4),
     },
     flashcard: {
         width: wp(80),
