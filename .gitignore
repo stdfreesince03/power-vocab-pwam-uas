@@ -29,6 +29,8 @@ yarn-error.*
 .DS_Store
 *.pem
 
+.idea
+
 # local env files
 .env*.local
 
@@ -36,3 +38,7 @@ yarn-error.*
 *.tsbuildinfo
 
 .idea/
+
+.env
+
+package-lock.json

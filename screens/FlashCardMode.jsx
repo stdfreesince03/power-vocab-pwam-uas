@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert, BackHandler } from 'react-native';
+import { View, Text, Pressable, StyleSheet, BackHandler } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft } from 'lucide-react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -11,26 +11,34 @@ import useAuthStore from "../store/authStore";
 
 const FlashCardModeScreen = () => {
     const navigation = useNavigation();
-    const { chosenCard, updateProgress } = useCardStore();
+    const { chosenCard, updateCard } = useCardStore();
+    const authStore = useAuthStore();
     const [remainingWords, setRemainingWords] = useState([]);
     const [currentWord, setCurrentWord] = useState(null);
     const [progress, setProgress] = useState(0);
-    const [learnedWords, setLearnedWords] = useState([]);
-    const authStore = useAuthStore();
+    const [learnedWords, setLearnedWords] = useState(new Set());
 
     useEffect(() => {
         if (chosenCard?.wordPairs?.length) {
-            const shuffledWords = [...chosenCard.wordPairs].sort(() => Math.random() - 0.5);
-            setRemainingWords(shuffledWords);
-            setCurrentWord(shuffledWords[0]);
+            const unlearnedWords = chosenCard.wordPairs.filter(wp => !wp.isLearned);
+            setRemainingWords([...unlearnedWords].sort(() => Math.random() - 0.5));
+            setCurrentWord(unlearnedWords[0] || null);
+
+            const learnedSet = new Set(
+                chosenCard.wordPairs.filter(wp => wp.isLearned)
+                    .map(wp => `${wp.english.toLowerCase()}:${wp.indonesian.toLowerCase()}`)
+            );
+            setLearnedWords(learnedSet);
+
+            const initialProgress = (learnedSet.size / chosenCard.wordPairs.length) * 100;
+            setProgress(initialProgress);
         }
 
-        const backAction = () => {
-            saveProgress();
-            return false;
-        };
+        const backHandler = BackHandler.addEventListener("hardwareBackPress", () => {
+            handleSaveAndExit();
+            return true;
+        });
 
-        const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
         return () => backHandler.remove();
     }, [chosenCard]);
 
@@ -42,30 +50,52 @@ const FlashCardModeScreen = () => {
     };
 
     const handleNext = (isKnown) => {
-        if (isKnown) {
-            setLearnedWords((prev) => [...prev, currentWord]);
-            setRemainingWords((prev) => prev.filter(word => word !== currentWord));
-        }
+        if (currentWord) {
+            setLearnedWords(prev => {
+                const updated = new Set(prev);
+                if (isKnown) {
+                    updated.add(`${currentWord.english.toLowerCase()}:${currentWord.indonesian.toLowerCase()}`);
+                }
+                return updated;
+            });
 
-        if (remainingWords.length > 1) {
-            const newWords = remainingWords.filter(word => word !== currentWord);
-            setCurrentWord(newWords[Math.floor(Math.random() * newWords.length)]);
-            setProgress(((chosenCard.wordPairs.length - newWords.length) / chosenCard.wordPairs.length) * 100);
-        } else {
-            setProgress(100);
-            setCurrentWord(null);
+            setRemainingWords(prevWords => {
+                const newWords = prevWords.filter(word => word !== currentWord);
+                if (newWords.length > 0) {
+                    setCurrentWord(newWords[Math.floor(Math.random() * newWords.length)]);
+                    setProgress(((chosenCard.wordPairs.length - newWords.length) / chosenCard.wordPairs.length) * 100);
+                } else {
+                    setProgress(100);
+                    setCurrentWord(null);
+                    saveProgress();
+                }
+                return newWords;
+            });
         }
     };
 
     const saveProgress = async () => {
-        if (learnedWords.length > 0) {
-            const token = authStore.token;
-            await updateProgress(token, chosenCard.id, learnedWords.map(word => ({
-                english: word.english,
-                indonesian: word.indonesian,
-                isLearned: true
-            })));
-        }
+        if (!chosenCard) return;
+
+        const updatedWordPairs = chosenCard.wordPairs.map(word => ({
+            english: word.english,
+            indonesian: word.indonesian,
+            isLearned: learnedWords.has(`${word.english.toLowerCase()}:${word.indonesian.toLowerCase()}`)
+        }));
+
+        const updatedCard = {
+            ...chosenCard,
+            progress: Math.round((learnedWords.size / chosenCard.wordPairs.length) * 100),
+            wordPairs: updatedWordPairs
+        };
+
+        console.log("Sending Data to API:", JSON.stringify(updatedCard, null, 2));
+        await updateCard(authStore.token, updatedCard);
+    };
+
+    const handleSaveAndExit = async () => {
+        await saveProgress();
+        navigation.goBack();
     };
 
     if (!chosenCard || !chosenCard.wordPairs?.length) {
@@ -79,14 +109,12 @@ const FlashCardModeScreen = () => {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Pressable onPress={() => { saveProgress(); navigation.goBack(); }} style={styles.backButton}>
-                    <ArrowLeft size={24} color={"#0ea5e9"} />
+                <Pressable onPress={handleSaveAndExit} style={styles.backButton}>
+                    <ArrowLeft size={24} color={colors.primary[500]} />
                     <Text style={styles.backText}>Back</Text>
                 </Pressable>
                 <Text style={styles.wordCounter}>
-                    Word {remainingWords.length > 0 ? chosenCard.wordPairs.length - remainingWords.length + 1 :
-                    chosenCard.wordPairs.length - remainingWords.length
-                } of {chosenCard.wordPairs.length}
+                    Word {chosenCard.wordPairs.length - remainingWords.length} of {chosenCard.wordPairs.length}
                 </Text>
             </View>
 
@@ -102,7 +130,7 @@ const FlashCardModeScreen = () => {
             {currentWord ? (
                 <>
                     <Text style={styles.progressText}>
-                        Progress: {Math.round(progress)}% ({chosenCard.wordPairs.length - remainingWords.length} of {chosenCard.wordPairs.length} words)
+                        Progress: {Math.round(progress)}% ({learnedWords.size} of {chosenCard.wordPairs.length} words)
                     </Text>
 
                     <View style={styles.flashcard}>
@@ -110,10 +138,16 @@ const FlashCardModeScreen = () => {
                     </View>
 
                     <View style={styles.buttonContainer}>
-                        <Pressable style={[styles.button, styles.knownButton]} onPress={() => handleNext(true)}>
+                        <Pressable
+                            style={[styles.button, styles.knownButton]}
+                            onPress={() => handleNext(true)}
+                        >
                             <Text style={styles.buttonText}>I Know This</Text>
                         </Pressable>
-                        <Pressable style={[styles.button, styles.learningButton]} onPress={() => handleNext(false)}>
+                        <Pressable
+                            style={[styles.button, styles.learningButton]}
+                            onPress={() => handleNext(false)}
+                        >
                             <Text style={styles.buttonText}>Still Learning</Text>
                         </Pressable>
                     </View>
@@ -128,7 +162,7 @@ const FlashCardModeScreen = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#ffffff",
+        backgroundColor: colors.background_1.white,
         paddingHorizontal: spacing[4],
         paddingTop: hp(7),
         alignItems: 'center',
@@ -146,20 +180,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     backText: {
-        color: "#0ea5e9",
+        color: colors.primary[500],
         fontSize: typography.sizes.md,
         marginLeft: spacing[2],
         fontWeight: 'bold',
     },
     wordCounter: {
-        color: "#0ea5e9",
+        color: colors.primary[500],
         fontSize: typography.sizes.md,
         fontWeight: 'bold',
     },
     progressContainer: {
         width: '90%',
         height: 6,
-        backgroundColor: "#e5e7eb",
+        backgroundColor: colors.gray[200],
         borderRadius: 3,
         marginBottom: spacing[4],
         overflow: 'hidden',
@@ -170,17 +204,17 @@ const styles = StyleSheet.create({
     },
     progressText: {
         fontSize: typography.sizes.lg,
-        color: "#0369a1",
+        color: colors.primary[700],
         marginBottom: hp(4),
     },
     flashcard: {
         width: wp(80),
         height: hp(25),
-        backgroundColor: "#e0f2fe",
+        backgroundColor: colors.primary[100],
         borderRadius: spacing[4],
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: "#1f2937",
+        shadowColor: colors.gray[800],
         shadowOpacity: 0.1,
         shadowRadius: 10,
         marginBottom: hp(3),
@@ -188,7 +222,7 @@ const styles = StyleSheet.create({
     wordText: {
         fontSize: typography.sizes["2xl"],
         fontWeight: 'bold',
-        color: "#0369a1",
+        color: colors.primary[700],
     },
     buttonContainer: {
         width: wp(80),
@@ -202,25 +236,25 @@ const styles = StyleSheet.create({
         marginBottom: spacing[3],
     },
     knownButton: {
-        backgroundColor: "#22c55e",
+        backgroundColor: colors.secondary[500],
     },
     learningButton: {
-        backgroundColor: "#dc2626",
+        backgroundColor: colors.error[600],
     },
     buttonText: {
-        color: 'white',
+        color: colors.background_1.white,
         fontSize: typography.sizes.lg,
         fontWeight: 'bold',
     },
     completedText: {
         fontSize: typography.sizes.lg,
-        color: "#22c55e",
+        color: colors.secondary[500],
         fontWeight: 'bold',
         marginTop: hp(5),
     },
     noWordsText: {
         fontSize: typography.sizes.lg,
-        color: "#6b7280",
+        color: colors.gray[500],
         marginTop: hp(20),
     },
 });

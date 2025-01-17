@@ -41,23 +41,36 @@ export async function deleteCardService(token, cardId) {
     }
 }
 
-export async function updateCardService(token,updatedCard) {
+export async function updateCardService(token, updatedCard) {
     try {
-        const response = await apiClient.put(`/api/cards/${updatedCard.id}`, updatedCard,{
+        console.log("Sending Data to API:", JSON.stringify(updatedCard, null, 2));
+
+        const response = await apiClient.put(`/api/cards/${updatedCard.id}`, updatedCard, {
             headers: {
                 Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
             },
         });
+
+        console.log("Received API Response:", JSON.stringify(response.data, null, 2));
         return response.data;
     } catch (err) {
+        console.log("API Error:", err.response?.data || err.message);
         return { error: err.response?.data?.error || "An unknown error occurred" };
     }
 }
 
 export async function updateProgressService(token, cardId, wordPairs) {
     try {
+
         const response = await apiClient.put(`/api/cards/${cardId}/progress`,
-            { wordPairs },
+            {
+                wordPairs: wordPairs.map(pair => ({
+                    english: pair.english,
+                    indonesian: pair.indonesian,
+                    is_learned: pair.isLearned
+                }))
+            },
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -65,8 +78,10 @@ export async function updateProgressService(token, cardId, wordPairs) {
                 },
             }
         );
+        console.log('Progress Update Response:', response.data); // For debugging
         return response.data;
     } catch (err) {
+        console.error('Progress Update Error:', err.response?.data || err);
         return { error: err.response?.data?.error || "An unknown error occurred" };
     }
 }

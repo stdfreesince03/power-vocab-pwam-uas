@@ -22,6 +22,9 @@ export default function DetailCardModal({ visible, onClose, wordPairs, onSuccess
         if (initialData) {
             setTitle(initialData.title || '');
             setTargetDays(initialData.targetDays?.toString() || '');
+        }else{
+            setTitle( '');
+            setTargetDays( '');
         }
     }, [initialData, visible])
 
@@ -32,8 +35,9 @@ export default function DetailCardModal({ visible, onClose, wordPairs, onSuccess
             targetDays: parseInt(targetDays),
             wordPairs: wordPairs.map(pair => ({
                 english: pair.english,
-                indonesian: pair.indonesian
-            }))
+                indonesian: pair.indonesian,
+                isLearned: pair.isLearned || false
+            })),
         };
         onSuccess(newCard);
         handleClose();
@@ -53,7 +57,8 @@ export default function DetailCardModal({ visible, onClose, wordPairs, onSuccess
             targetDays: parseInt(targetDays),
             wordPairs: wordPairs.map(pair => ({
                 english: pair.english,
-                indonesian: pair.indonesian
+                indonesian: pair.indonesian,
+                isLearned:pair.isLearned || false
             }))
         };
         onUpdate(updatedCard);

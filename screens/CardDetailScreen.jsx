@@ -18,6 +18,7 @@ const CardDetailScreen = ({ route }) => {
     const navigation = useNavigation();
     const { chosenCard,setChosenCard } = useCardStore();
 
+
     function handleGoBack(){
         setChosenCard(null);
         navigation.goBack();
