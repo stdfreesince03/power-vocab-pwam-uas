@@ -57,7 +57,7 @@ export async function updateCardService(token,updatedCard) {
 export async function updateProgressService(token, cardId, wordPairs) {
     try {
         const response = await apiClient.put(`/api/cards/${cardId}/progress`,
-            { wordPairs }, // Send only the wordPairs data
+            { wordPairs },
             {
                 headers: {
                     Authorization: `Bearer ${token}`,

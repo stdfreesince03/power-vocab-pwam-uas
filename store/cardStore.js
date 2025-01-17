@@ -1,5 +1,11 @@
 import { create } from 'zustand';
-import {createCard, deleteCardService, getCards, updateCardService} from '../service/cardService';
+import {
+    createCard,
+    deleteCardService,
+    getCards,
+    updateCardService,
+    updateProgressService
+} from '../service/cardService';
 
 const useCardStore = create((set) => ({
     cards: [],
@@ -82,6 +88,29 @@ const useCardStore = create((set) => ({
             }));
         } catch (error) {
             set({ error: error.message });
+        }
+    },
+
+    updateProgress: async (token, cardId, learnedWords) => {
+        set({ isLoading: true, error: null });
+
+        try {
+            const updatedProgress = await updateProgressService(token, cardId, learnedWords);
+
+            if (updatedProgress.error) {
+                set({ error: updatedProgress.error });
+                return;
+            }
+
+            set((state) => ({
+                cards: state.cards.map((c) =>
+                    c.id === cardId ? { ...c, progress: updatedProgress.progress } : c
+                ),
+            }));
+        } catch (error) {
+            set({ error: 'Failed to update progress' });
+        } finally {
+            set({ isLoading: false });
         }
     },
 

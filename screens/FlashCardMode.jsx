@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert, BackHandler } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft } from 'lucide-react-native';
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
@@ -7,15 +7,16 @@ import colors from '../theme/color';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import useCardStore from '../store/cardStore';
+import useAuthStore from "../store/authStore";
 
 const FlashCardModeScreen = () => {
     const navigation = useNavigation();
-    const { chosenCard } = useCardStore();
+    const { chosenCard, updateProgress } = useCardStore();
     const [remainingWords, setRemainingWords] = useState([]);
     const [currentWord, setCurrentWord] = useState(null);
     const [progress, setProgress] = useState(0);
-
-    console.log('remainingords',remainingWords);
+    const [learnedWords, setLearnedWords] = useState([]);
+    const authStore = useAuthStore();
 
     useEffect(() => {
         if (chosenCard?.wordPairs?.length) {
@@ -23,6 +24,14 @@ const FlashCardModeScreen = () => {
             setRemainingWords(shuffledWords);
             setCurrentWord(shuffledWords[0]);
         }
+
+        const backAction = () => {
+            saveProgress();
+            return false;
+        };
+
+        const backHandler = BackHandler.addEventListener("hardwareBackPress", backAction);
+        return () => backHandler.remove();
     }, [chosenCard]);
 
     const getProgressColor = (progress) => {
@@ -34,6 +43,7 @@ const FlashCardModeScreen = () => {
 
     const handleNext = (isKnown) => {
         if (isKnown) {
+            setLearnedWords((prev) => [...prev, currentWord]);
             setRemainingWords((prev) => prev.filter(word => word !== currentWord));
         }
 
@@ -44,6 +54,17 @@ const FlashCardModeScreen = () => {
         } else {
             setProgress(100);
             setCurrentWord(null);
+        }
+    };
+
+    const saveProgress = async () => {
+        if (learnedWords.length > 0) {
+            const token = authStore.token;
+            await updateProgress(token, chosenCard.id, learnedWords.map(word => ({
+                english: word.english,
+                indonesian: word.indonesian,
+                isLearned: true
+            })));
         }
     };
 
@@ -58,7 +79,7 @@ const FlashCardModeScreen = () => {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
-                <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+                <Pressable onPress={() => { saveProgress(); navigation.goBack(); }} style={styles.backButton}>
                     <ArrowLeft size={24} color={"#0ea5e9"} />
                     <Text style={styles.backText}>Back</Text>
                 </Pressable>
@@ -90,10 +111,10 @@ const FlashCardModeScreen = () => {
 
                     <View style={styles.buttonContainer}>
                         <Pressable style={[styles.button, styles.knownButton]} onPress={() => handleNext(true)}>
-                            <Text style={styles.buttonText}>✔ I Know This</Text>
+                            <Text style={styles.buttonText}>I Know This</Text>
                         </Pressable>
                         <Pressable style={[styles.button, styles.learningButton]} onPress={() => handleNext(false)}>
-                            <Text style={styles.buttonText}>✖ Still Learning</Text>
+                            <Text style={styles.buttonText}>Still Learning</Text>
                         </Pressable>
                     </View>
                 </>
