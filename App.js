@@ -9,6 +9,11 @@ import useAuthStore from "./store/authStore";
 import {useEffect, useState} from "react";
 import CardDetailScreen from "./screens/CardDetailScreen";
 import FlashCardMode from "./screens/FlashCardMode";
+import GameModeOptionsScreen from "./screens/GameModeOptions";
+import BubbleBathGame from "./screens/BubbleBathGame";
+import TranslationGame from "./screens/TranslationGame";
+import DragDropWordGame from "./screens/DragDropGame";
+
 
 const AuthStack = createNativeStackNavigator();
 const AppStack = createNativeStackNavigator();
@@ -57,6 +62,31 @@ export default function App() {
                                              headerShown:false
                                          }}
                         />
+                        <AppStack.Screen name="GameModeOptions"
+                                         component={GameModeOptionsScreen}
+                                         options={{
+                                             headerShown:false
+                                         }}
+                        />
+                        <AppStack.Screen name={"BubbleGame"}
+                                         component={BubbleBathGame}
+                                         options={{
+                                             headerShown:false
+                                         }}
+                        />
+                        <AppStack.Screen name={"TranslationGame"}
+                                         component={TranslationGame}
+                                         options={{
+                                             headerShown:false
+                                         }}
+                        />
+                        <AppStack.Screen name={"DragDropGame"}
+                                         component={DragDropWordGame}
+                                         options={{
+                                             headerShown:false
+                                         }}
+                        />
+
                     </AppStack.Navigator>
                 ) : (
                     <AuthStack.Navigator>

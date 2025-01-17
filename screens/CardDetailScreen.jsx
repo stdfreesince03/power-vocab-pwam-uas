@@ -6,7 +6,7 @@ import {
     FlatList,
     StyleSheet
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import {StackActions, useNavigation} from '@react-navigation/native';
 import { ArrowLeft, PlayCircle, Library } from 'lucide-react-native';
 import colors from '../theme/color.js';
 import { spacing } from '../theme/spacing';
@@ -24,19 +24,21 @@ const CardDetailScreen = ({ route }) => {
         navigation.goBack();
     }
 
+    function toGameModeOptions() {
+        navigation.dispatch(
+            StackActions.replace("GameModeOptions")
+        );
+    }
+
     return (
         <View style={styles.container}>
-            {/* Back Button */}
             <Pressable onPress={() =>handleGoBack()} style={styles.backButton}>
                 <ArrowLeft size={22} color={colors.primary[500]} />
                 <Text style={styles.backText}>Back to Cards</Text>
             </Pressable>
 
-            {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.title}>{chosenCard?.title || "Card Title"}</Text>
-
-                {/* Inverted Triangle Info Container */}
                 <View style={styles.infoContainer}>
                     <View style={styles.infoBox}>
                         <Text style={styles.infoText}>Progress: {chosenCard?.progress || 0}%</Text>
@@ -52,19 +54,17 @@ const CardDetailScreen = ({ route }) => {
                 </View>
             </View>
 
-            {/* Buttons */}
             <View style={styles.buttonContainer}>
                 <Pressable style={[styles.button, styles.flashcardButton]} onPress={() => navigation.navigate('FlashCardMode')}>
                     <PlayCircle size={26} color="white" />
                     <Text style={styles.buttonText}>Flashcard Mode</Text>
                 </Pressable>
-                <Pressable style={[styles.button, styles.gameButton]} onPress={() => {}}>
+                <Pressable style={[styles.button, styles.gameButton]} onPress={() => toGameModeOptions()}>
                     <Library size={26} color="white" />
                     <Text style={styles.buttonText}>Game Mode</Text>
                 </Pressable>
             </View>
 
-            {/* Word List */}
             <FlatList
                 ListHeaderComponent={() => (
                     <View style={styles.wordTableHeader}>
