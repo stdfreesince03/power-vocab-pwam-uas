@@ -16,15 +16,17 @@ import { widthPercentageToDP as wp, heightPercentageToDP as hp } from "react-nat
 
 const CardDetailScreen = ({ route }) => {
     const navigation = useNavigation();
-    const { chosenCard } = useCardStore();
+    const { chosenCard,setChosenCard } = useCardStore();
 
-
-
+    function handleGoBack(){
+        setChosenCard(null);
+        navigation.goBack();
+    }
 
     return (
         <View style={styles.container}>
             {/* Back Button */}
-            <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Pressable onPress={() =>handleGoBack()} style={styles.backButton}>
                 <ArrowLeft size={22} color={colors.primary[500]} />
                 <Text style={styles.backText}>Back to Cards</Text>
             </Pressable>

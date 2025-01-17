@@ -95,6 +95,7 @@ const styles = StyleSheet.create({
         borderRadius: wp(2),
         padding: spacing[3],
         marginTop: spacing[4],
+        marginLeft:wp(5),
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,

@@ -25,9 +25,9 @@ const FlashCardModeScreen = () => {
 
     const getProgressColor = (progress) => {
         if (progress === 0) return "transparent";
-        if (progress < 30) return "#ef4444"; // Red
-        if (progress < 70) return "#facc15"; // Orange
-        return "#22c55e"; // Green when 100%
+        if (progress < 30) return "#ef4444";
+        if (progress < 70) return "#facc15";
+        return "#22c55e";
     };
 
     const handleNext = (isKnown) => {
